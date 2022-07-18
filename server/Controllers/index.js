@@ -15,7 +15,9 @@ const DEVICES_PATH = "./data/devices";
 const FW_PATH = "./data/firmware";
 const FLASH_SCRIPT_PATH = path.join(cwd(), "./data/scripts/flash.sh");
 const FLASH_LOG_PATH = path.join(cwd(), "./data/scripts/flash.log");
-const FLASH_LOG_END = "!CHATU!"
+const FLASH_LOG_END = "!DoNe!"
+const POWERCYCLE_SCRIPT_PATH = path.join(cwd(), "./data/scripts/power-cycle.sh");
+const POWERCYCLE_LOG_PATH = path.join(cwd(), "./data/scripts/power-cycle.log");
 
 router.post("/devices", (req, res) => {
   const dirPath = DEVICES_PATH;
@@ -94,7 +96,7 @@ router.post("/flash", (req, res) => {
   const devices = req.body.devices;
   const firmware = path.join(FW_PATH, req.body.firmware);
 
-  exec(`${FLASH_SCRIPT_PATH} "${firmware}" ${devices.join(" ")} > ${FLASH_LOG_PATH}`, (err, stdout, stderr) => {
+  exec(`${FLASH_SCRIPT_PATH} ${firmware} ${devices.join(" ")} > ${FLASH_LOG_PATH}`, (err, stdout, stderr) => {
     if (err) {
       Logger.Error(err);
       return;
@@ -123,9 +125,9 @@ router.post("/lines", (req, res) => {
     if (afterLineNumber != 0) {
       lines = lines.slice(afterLineNumber);
     }
-    if (eof) {
-      lines.pop();
-    }
+    // if (eof) {
+    //   lines.pop();
+    // }
 
     res.send({
       lines: lines.join("\n"),
@@ -133,6 +135,23 @@ router.post("/lines", (req, res) => {
       eof,
     });
   });
+});
+
+router.post("/powercycle", (req, res) => {
+  const devices = req.body.devices;
+
+  exec(`${POWERCYCLE_SCRIPT_PATH} ${devices.join(" ")} > ${POWERCYCLE_LOG_PATH}`, (err, stdout, stderr) => {
+    if (err) {
+      Logger.Error(err);
+      return;
+    }
+
+    Logger.Event(`${devices} ...were power cycled`);
+    Logger.System(`stdout: ${stdout}`);
+    Logger.System(`stderr: ${stderr}`);
+  });
+
+  res.sendStatus(200);
 });
 
 module.exports = router;
